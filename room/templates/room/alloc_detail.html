@@ -1,0 +1,23 @@
+{% extends 'room/base.html' %}
+
+{% block title %}
+Room Allocation - {{ object.name }}
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+{% endblock %}
+
+{% block body %}
+{{ block.super }}
+<div class="content-wrap">
+	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#room-config">Room Configuration</button>
+	<div id="room-config" class="collapse in">
+		<hr>
+		<img src="{{ case_form.instance.img.url }}" />
+	</div>
+</div>
+{% endblock %}

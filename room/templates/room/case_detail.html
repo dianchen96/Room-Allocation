@@ -1,0 +1,90 @@
+{% extends 'room/base.html' %}
+
+{% block title %}
+Room Allocation - {{ object.name }}
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+{% endblock %}
+
+{% block body %}
+{{ block.super }}
+<div class="content-wrap">
+	<h3>Room Allocation - {{ object.name }}</h3>
+	<hr>
+	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#case-info">Case Information</button>
+	<div id="case-info" class="collapse">
+		<table class="pure-table pure-table-horizontal custom-table">
+			{{ case_form.as_table }}
+		</table>
+	</div>
+	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#room-config">Room Configuration</button>
+	<div id="room-config" class="collapse">
+		<hr>
+		<img src="{{ case_form.instance.img.url }}" />
+	</div>
+	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#room-info">Room Information</button>
+	<div id="room-info" class="collapse">
+		<table class="pure-table pure-table-striped custom-table">
+			<thead>
+				<tr><th>Room Name</th></tr>
+			</thread>	
+			<tbody>
+				{% for room in rooms %}
+					<tr><th>{{ room }}</th></tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	<h3 class="custom-create-title">Create New Room</h3>
+		<form class="pure-form" action="/room/create-room", method="POST" data-ajax="false">
+			{% csrf_token %}
+    	<fieldset>
+			<table class="pure-table pure-table-horizontal custom-table">
+				{{ room_form.as_table }}
+			</table>
+			<button type="submit" class="pure-button pure-button-primary">Create</button>
+			</fieldset>
+		</form>
+	</div>
+	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#group-info">Group Configuration</button>
+	<div id="group-info" class="collapse"> 
+	<table class="pure-table pure-table-striped custom-table">
+			<thead>
+				<tr><th>Group Name</th><th>Number of Person</th></tr>
+			</thread>	
+			<tbody>
+				{% for renter in renters %}
+					<tr><th>{{ renter.name }}</th><th>{{ renter.num_of_renters }}</th></tr>
+				{% endfor %}
+			</tbody>
+	</table>
+	<h3 class="custom-create-title">Create New Group</h3>
+		<form class="pure-form" action="/room/create-group", method="POST" data-ajax="false">
+			{% csrf_token %}
+    	<fieldset>
+			<table class="pure-table pure-table-horizontal custom-table">
+				{{ group_form.as_table }}
+			</table>
+			<button type="submit" class="pure-button pure-button-primary">Create</button>
+			</fieldset>
+		</form>
+	</div>
+	<hr>
+	<h3>Choose Your Identity</h3>
+	<form class="pure-form pure-form-aligned" action="/room/start-alloc/{{ case.name }}" method="POST">
+		{% csrf_token %}
+		<fieldset>
+    <div class="pure-control-group">
+			{{ session_form }}
+			<button type="submit" class="pure-button pure-button-primary">Start Allocation</button> 
+		</div>
+	</fieldset>
+	</form>
+
+</div>
+
+{% endblock %}
