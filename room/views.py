@@ -1,6 +1,7 @@
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.generic import ListView, DetailView
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib import messages
 from .models import Case, Room, Group, Allocation
 from .forms import CaseForm, RoomForm, GroupForm, ReadOnlyCaseForm, SessionForm
 from datetime import datetime
@@ -25,10 +26,20 @@ class IndexView(ListView):
 		return context
 
 
-# class for case view, a detailed overview of a case
 class CaseView(DetailView):
+	'''
+  The genertic class for case view, a detailed overview of a case. 
+  This view also renders err message based on the error code in the GET
+  query string, if redirected from '/start_alloc'. See below for detailed 
+  explanation of error code
+	'''
 	template_name = 'room/case_detail.html'
 	model = Case
+
+	err_msg = {
+		1: "The identity you selected is invalid. Please try again.",
+		2: "The idendity you selected has already logged in. Please try again.",
+	}
 
 	def get_context_data(self, **kwargs):
 		context = super(CaseView, self).get_context_data(**kwargs)
@@ -40,6 +51,10 @@ class CaseView(DetailView):
 		context['room_form'] = RoomForm(initial={'case':self.object})
 		context['group_form'] = GroupForm(initial={'case':self.object})
 		context['session_form'] = SessionForm(self.object)
+		# If there is err_msg in GET query, include it in context
+		if self.request.GET.get("err"):
+			err_code = int(self.request.GET.get("err"))
+			context['err_msg'] = CaseView.err_msg[err_code]
 		return context
 
 
@@ -50,27 +65,31 @@ class AllocView(DetailView):
 
 	def get_context_data(self, **kwargs):
 		context = super(AllocView, self).get_context_data(**kwargs)
-		context['groups'] = Group.objects.filter(case=self.object)
-		context['rooms'] = Room.objects.filter(case=self.object)
-		context['case_form'] = ReadOnlyCaseForm(instance=self.object)
+		context['groups'] = Group.objects.filter(case=self.object.case)
+		context['rooms'] = Room.objects.filter(case=self.object.case)
+		context['case_form'] = ReadOnlyCaseForm(instance=self.object.case)
 		return context
 
-	def post(self, request, *args, **kwargs):
-		form = SessionForm(request.POST)
+
+def start_alloc(request, pk):
+	if request.method == 'POST':
+		case = get_object_or_404(Case, pk=pk)
+		form = SessionForm(case, request.POST)
 		if form.is_valid():
 			# Log in the group
 			group_name = form.cleaned_data['group']
-			try:
-				group = Group.objects.get(case=self.object.case, name=group_name)
-			except ObjectDoesNotExist:
-				return HttpResponseNotFound(
-					"<h3>No corresbonding group exists. Please contact administrator</h3>")
+			group = get_object_or_404(Group, case=case, name=group_name)
 			group.login(request.user)
-			if self.object.is_ready():
-				# TODO: Inform all group members
-				
-
+			alloc = get_object_or_404(Allocation, pk=case)
+			if alloc.is_ready():
+				# Setup is_ready message
+				messages.add_message(request, messages.INFO, "ready", group.case)
+			return redirect("room:alloc", pk=group.case.name)
 		else:
+			return redirect(request.META.get('HTTP_REFERER') + "?err=1")
+	else:
+		return HttpResponseNotFound('<h3>Page not found</h3>')
+
 
 
 
@@ -80,8 +99,8 @@ def create_case(request):
 		form = CaseForm(request.POST, request.FILES)
 		if form.is_valid():
 			form.save()
-			# Create associated alloction object
-			alloc = Allocation(form.instance)
+			# Create an associated alloction object
+			alloc = Allocation(form.cleaned_data['name'])
 			alloc.save()
 			return redirect('room:index')
 		else:

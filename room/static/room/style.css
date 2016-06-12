@@ -63,6 +63,10 @@
 	font-size: 16px;
 }
 
+.err-msg {
+	color: red;
+}
+
 a:link {
     text-decoration: none !important;
 }
@@ -78,6 +82,8 @@ a:hover {
 a:active {
     text-decoration: underline;
 }
+
+
  
 h3 { color: #777 !important; font-family: 'Helvetica Neue', sans-serif !important letter-spacing: -1px; line-height: 1;}
 

@@ -6,9 +6,6 @@ Room Allocation - {{ object.name }}
 
 {% block head %}
 {{ block.super }}
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
-<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 {% endblock %}
 
 {% block body %}
@@ -75,13 +72,13 @@ Room Allocation - {{ object.name }}
 	</div>
 	<hr>
 	<h3>Choose Your Identity</h3>
+	<!--If user has selected an invalid identity and redirected back -->
+	<p class="err-msg">{{ err_msg }}</p>
 	<form class="pure-form pure-form-aligned" action="/room/start-alloc/{{ case.name }}" method="POST">
 		{% csrf_token %}
 		<fieldset>
-    <div class="pure-control-group">
 			{{ session_form }}
 			<button type="submit" class="pure-button pure-button-primary">Start Allocation</button> 
-		</div>
 	</fieldset>
 	</form>
 
