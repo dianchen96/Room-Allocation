@@ -1,4 +1,5 @@
 {% extends 'room/base.html' %}
+{% load staticfiles%}
 
 {% block title %}
 Room Allocation - {{ object.name }}
@@ -6,11 +7,14 @@ Room Allocation - {{ object.name }}
 
 {% block head %}
 {{ block.super }}
+<script src="{% static 'room/allocation.js' %}"></script>
+<script src="{% static 'room/spin.min.js' %}"></script>
 {% endblock %}
 
 {% block body %}
 {{ block.super }}
 <div class="content-wrap">
+	<p hidden id="case_name">{{ object.name }}</p>
 	<h3>Room Allocation - {{ object.name }}</h3>
 	<hr>
 	<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#case-info">Case Information</button>
@@ -37,7 +41,7 @@ Room Allocation - {{ object.name }}
 			</tbody>
 		</table>
 	<h3 class="custom-create-title">Create New Room</h3>
-		<form class="pure-form" action="/room/create-room", method="POST" data-ajax="false">
+		<form class="pure-form" action="/room/create-room/", method="POST" data-ajax="false">
 			{% csrf_token %}
     	<fieldset>
 			<table class="pure-table pure-table-horizontal custom-table">
@@ -60,7 +64,7 @@ Room Allocation - {{ object.name }}
 			</tbody>
 	</table>
 	<h3 class="custom-create-title">Create New Group</h3>
-		<form class="pure-form" action="/room/create-group", method="POST" data-ajax="false">
+		<form class="pure-form" action="/room/create-group/", method="POST" data-ajax="false">
 			{% csrf_token %}
     	<fieldset>
 			<table class="pure-table pure-table-horizontal custom-table">
@@ -74,14 +78,42 @@ Room Allocation - {{ object.name }}
 	<h3>Choose Your Identity</h3>
 	<!--If user has selected an invalid identity and redirected back -->
 	<p class="err-msg">{{ err_msg }}</p>
-	<form class="pure-form pure-form-aligned" action="/room/start-alloc/{{ case.name }}" method="POST">
+	<form id="identity_form" class="pure-form pure-form-aligned">
 		{% csrf_token %}
 		<fieldset>
 			{{ session_form }}
-			<button type="submit" class="pure-button pure-button-primary">Start Allocation</button> 
+			<button id="confirm_identity" class="pure-button pure-button-primary">Start Allocation</button> 
 	</fieldset>
 	</form>
+	<!-- Waiting modal -->
+	<div class="modal fade" id="waiting_modal" role="dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4>Waiting for other groups</h4>
+			</div>
+			<div id="spinner" class="modal-body">
+				<!-- Waiting animation -->
 
+			</div>
+			<div class="modal-footer">
+				<button id="cancel_alloc" class="pure-button">Cancel</button>
+			</div>
+		</div>
+	</div>	
+	<!-- Allocation modal -->
+	<div class="modal fade" id="alloc_modal" role="dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4>Which room will you choose?</h4>
+			</div>
+			<div id="price_scheme" class="modal-body">
+				<!-- pricing scheme, setup by js -->
+			</div>
+			<div class="modal-footer">
+				<button id="confirm_choice" class="pure-button pure-button-primary">Confirm</button>
+			</div>
+		</div>
+	</div>	
 </div>
 
 {% endblock %}

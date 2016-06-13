@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'room.apps.RoomConfig',
+    'channels',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -83,6 +84,14 @@ DATABASES = {
 }
 
 
+# Channel
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "room.routing.channel_routing",
+    },
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 
@@ -107,15 +116,6 @@ USER_ONLINE_TIMEOUT = 300
 # Number of seconds that we will keep track of inactive users for before 
 # their last seen is removed from the cache
 USER_LASTSEEN_TIMEOUT = 60 * 60
-
-# Setup caching per Django docs. In actuality, you'd probably use memcached instead of local memory.
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'default-cache'
-    }
-}
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.9/topics/i18n/

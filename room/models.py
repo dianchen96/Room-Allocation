@@ -2,10 +2,8 @@ from __future__ import unicode_literals
 
 import datetime
 from django.db import models
-from django.core.cache import cache
 from django.conf import settings
 
-from jsonfield import JSONField
 
 class Case(models.Model):
 	name = models.CharField(max_length=200, primary_key=True)
@@ -22,21 +20,46 @@ class Room(models.Model):
 
 	def __unicode__(self):
 		return self.name
+
 		
+class Group(models.Model):
+	case = models.ForeignKey(Case, on_delete=models.CASCADE)
+	name = models.CharField(max_length=200)
+	num_of_renters = models.IntegerField(default=1)
+
+	def __unicode__(self):
+		return self.name
+
+   
+class Scheme(models.Model):
+	room = models.ForeignKey(Room, on_delete=models.CASCADE)
+	rent = models.IntegerField(default=0)
+
+class Choice(models.Model):
+	group = models.ForeignKey(Group, on_delete=models.CASCADE)
+	scheme = models.ForeignKey(Scheme, on_delete=models.CASCADE) 
+
 
 class Allocation(models.Model):
 	case = models.OneToOneField(Case, on_delete=models.CASCADE, primary_key=True)
-	is_finished = models.BooleanField(default=False)
+	prev_choices = models.ManyToManyField(Choice, related_name="prev_allocation")
+	curr_choices = models.ManyToManyField(Choice, related_name="curr_allocation")
 
-	room_to_price = JSONField(default={})
-	group_to_choice = JSONField(default={})
+	def is_turn_finished(self):
+		num_of_groups = Group.objects.filter(case=self.case).count()
+		num_of_votes = self.curr_choices.count()
+		return num_of_votes == num_of_groups
 
-	def is_ready(self):
-		groups = Group.objects.filter(case=self.case)
-		return all(map(lambda group: group.is_online(), groups))
+	def vote(self, group, scheme):
+		# Make each group is only allowed to vote once during each turn
+		assert len(Choice.objects.filter(curr_allocation=self, group=group)) == 0
+		choice = Choice.objects.create(group=group, scheme=scheme)
+		self.curr_choices.add(choice)
 
-	def get_groups(self):
-		return Group.objects.filter(case=self.case)
+	def next_turn(self):
+		
+
+
 
 	def __init__(self, case_name, *args, **kwargs):
 		super(Allocation, self).__init__(*args, **kwargs)
@@ -44,34 +67,3 @@ class Allocation(models.Model):
 
 	def __unicode__(self):
 		return "Allocation for {}".format(self.case)
-
-
-
-
-
-class Group(models.Model):
-	case = models.ForeignKey(Case, on_delete=models.CASCADE)
-	name = models.CharField(max_length=200)
-	num_of_renters = models.IntegerField(default=1)
-
-	def last_seen(self):
-		return cache.get('seen_group_%s' % self.name)
-
-	def is_online(self):
-		if self.last_seen():
-			now = datetime.datetime.now()
-			if now > self.last_seen() + datetime.timedelta(\
-						seconds=settings.USER_ONLINE_TIMEOUT):
-				return False
-			else:
-				return True
-		else:
-			return False
-
-	def login(self, user):
-		now = datetime.datetime.now()
-		cache.set('seen_group_%s' % (self.name), now, settings.USER_LASTSEEN_TIMEOUT)
-
-	def __unicode__(self):
-		return self.name
-   

@@ -58,39 +58,38 @@ class CaseView(DetailView):
 		return context
 
 
+#### Out dataed. Allocation page will be a dialog inside /case/<case_name>/ #### 
+# class AllocView(DetailView):
+# 	template_name = 'room/alloc_detail.html'
+# 	model = Allocation
 
-class AllocView(DetailView):
-	template_name = 'room/alloc_detail.html'
-	model = Allocation
-
-	def get_context_data(self, **kwargs):
-		context = super(AllocView, self).get_context_data(**kwargs)
-		context['groups'] = Group.objects.filter(case=self.object.case)
-		context['rooms'] = Room.objects.filter(case=self.object.case)
-		context['case_form'] = ReadOnlyCaseForm(instance=self.object.case)
-		return context
-
-
-def start_alloc(request, pk):
-	if request.method == 'POST':
-		case = get_object_or_404(Case, pk=pk)
-		form = SessionForm(case, request.POST)
-		if form.is_valid():
-			# Log in the group
-			group_name = form.cleaned_data['group']
-			group = get_object_or_404(Group, case=case, name=group_name)
-			group.login(request.user)
-			alloc = get_object_or_404(Allocation, pk=case)
-			if alloc.is_ready():
-				# Setup is_ready message
-				messages.add_message(request, messages.INFO, "ready", group.case)
-			return redirect("room:alloc", pk=group.case.name)
-		else:
-			return redirect(request.META.get('HTTP_REFERER') + "?err=1")
-	else:
-		return HttpResponseNotFound('<h3>Page not found</h3>')
+# 	def get_context_data(self, **kwargs):
+# 		context = super(AllocView, self).get_context_data(**kwargs)
+# 		context['groups'] = Group.objects.filter(case=self.object.case)
+# 		context['rooms'] = Room.objects.filter(case=self.object.case)
+# 		context['case_form'] = ReadOnlyCaseForm(instance=self.object.case)
+# 		return context
 
 
+#### Out dataed. Use channel instead ##### 
+# def start_alloc(request, pk):
+# 	if request.method == 'POST':
+# 		case = get_object_or_404(Case, pk=pk)
+# 		form = SessionForm(case, request.POST)
+# 		if form.is_valid():
+# 			# Log in the group
+# 			group_name = form.cleaned_data['group']
+# 			group = get_object_or_404(Group, case=case, name=group_name)
+# 			group.login(request.user)
+# 			alloc = get_object_or_404(Allocation, pk=case)
+# 			if alloc.is_ready():
+# 				# Setup is_ready message
+# 				messages.add_message(request, messages.INFO, "ready", group.case)
+# 			return redirect("room:alloc", pk=group.case.name)
+# 		else:
+# 			return redirect(request.META.get('HTTP_REFERER') + "?err=1")
+# 	else:
+# 		return HttpResponseNotFound('<h3>Page not found</h3>')
 
 
 # Method for creating a case
