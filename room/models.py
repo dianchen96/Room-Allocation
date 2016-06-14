@@ -76,7 +76,7 @@ class Allocation(models.Model):
 
 
 	def next_turn(self):
-
+		pass
 
 
 	def __init__(self, case_name, *args, **kwargs):
