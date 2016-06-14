@@ -17,6 +17,7 @@ class Case(models.Model):
 class Room(models.Model):
 	case = models.ForeignKey(Case, on_delete=models.CASCADE)
 	name = models.CharField(max_length=200)
+	price = models.IntegerField(default=0)
 
 	def __unicode__(self):
 		return self.name
@@ -30,20 +31,27 @@ class Group(models.Model):
 	def __unicode__(self):
 		return self.name
 
-   
-class Scheme(models.Model):
-	room = models.ForeignKey(Room, on_delete=models.CASCADE)
-	rent = models.IntegerField(default=0)
 
 class Choice(models.Model):
 	group = models.ForeignKey(Group, on_delete=models.CASCADE)
-	scheme = models.ForeignKey(Scheme, on_delete=models.CASCADE) 
+	price = models.ForeignKey(Price, on_delete=models.CASCADE) 
+
+class Scheme(models.Model):
+	'''
+	Model for proposed house rent scheme. 
+	prices are room->rent mappings, and group is the Group that the Scheme 
+	is proposed to
+	'''
+	group = ForeignKey(Group, on_delete=models.CASCADE, related_name="scheme")
+	prices = ManyToManyField(Price)
+
 
 
 class Allocation(models.Model):
 	case = models.OneToOneField(Case, on_delete=models.CASCADE, primary_key=True)
 	prev_choices = models.ManyToManyField(Choice, related_name="prev_allocation")
 	curr_choices = models.ManyToManyField(Choice, related_name="curr_allocation")
+	accuracy = models.IntegerField(default=200)
 
 	def is_turn_finished(self):
 		num_of_groups = Group.objects.filter(case=self.case).count()
@@ -52,12 +60,22 @@ class Allocation(models.Model):
 
 	def vote(self, group, scheme):
 		# Make each group is only allowed to vote once during each turn
-		assert len(Choice.objects.filter(curr_allocation=self, group=group)) == 0
-		choice = Choice.objects.create(group=group, scheme=scheme)
-		self.curr_choices.add(choice)
+		if Choice.objects.filter(curr_allocation=self, group=group)) > 0:
+			return False
+		else:
+			choice = Choice.objects.create(group=group, scheme=scheme)
+			self.curr_choices.add(choice)
+			return True
+
+	def can_be_terminated(self):
+		# Make sure the current turn  is finished 
+		if not self.is_turn_finished():
+			return False
+		
+
+
 
 	def next_turn(self):
-		
 
 
 
