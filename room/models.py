@@ -1,8 +1,11 @@
 from __future__ import unicode_literals
 
 import datetime
+import pickle
 from django.db import models
 from django.conf import settings
+from algo import Simplex
+
 
 
 class Case(models.Model):
@@ -32,56 +35,88 @@ class Group(models.Model):
 		return self.name
 
 
-class Choice(models.Model):
-	group = models.ForeignKey(Group, on_delete=models.CASCADE)
-	price = models.ForeignKey(Price, on_delete=models.CASCADE) 
-
-class Scheme(models.Model):
-	'''
-	Model for proposed house rent scheme. 
-	prices are room->rent mappings, and group is the Group that the Scheme 
-	is proposed to
-	'''
-	group = ForeignKey(Group, on_delete=models.CASCADE, related_name="scheme")
-	prices = ManyToManyField(Price)
-
-
-
 class Allocation(models.Model):
 	case = models.OneToOneField(Case, on_delete=models.CASCADE, primary_key=True)
-	prev_choices = models.ManyToManyField(Choice, related_name="prev_allocation")
-	curr_choices = models.ManyToManyField(Choice, related_name="curr_allocation")
-	accuracy = models.IntegerField(default=200)
+	channels = models.TextField(default=None, null=True)
 
-	def is_turn_finished(self):
-		num_of_groups = Group.objects.filter(case=self.case).count()
-		num_of_votes = self.curr_choices.count()
-		return num_of_votes == num_of_groups
-
-	def vote(self, group, scheme):
-		# Make each group is only allowed to vote once during each turn
-		if Choice.objects.filter(curr_allocation=self, group=group)) > 0:
-			return False
-		else:
-			choice = Choice.objects.create(group=group, scheme=scheme)
-			self.curr_choices.add(choice)
-			return True
-
-	def can_be_terminated(self):
-		# Make sure the current turn  is finished 
-		if not self.is_turn_finished():
-			return False
-		
-
-
-
-	def next_turn(self):
-		pass
-
+	is_complete = models.BooleanField(default=False)
+	simplex = models.TextField(default=None, null=True)
+	# Stored scheme, if allocation has completed
+	scheme = models.TextField(default=None, null=True)
 
 	def __init__(self, case_name, *args, **kwargs):
 		super(Allocation, self).__init__(*args, **kwargs)
-		self.case = Case.objects.get(pk=case_name)
+		self.case = Case.objects.get(name=case_name)
+		self.channels = pickle.dumps({})
+		self.simplex = pickle.dumps(None)
 
 	def __unicode__(self):
 		return "Allocation for {}".format(self.case)
+
+	def add_channel(self, group, channel):
+		channels = pickle.loads(self.channels)
+		channels[group.name] = channel
+		self.channels = pickle.dumps(channels)
+		self.save()
+
+	def get_channels(self):
+		return pickle.loads(channels)
+
+	def get_channel(self, group):
+		channels = pickle.loads(self.channels)
+		return channels[group.name]
+
+	def get_current_player(self):
+		player_index = self.to_simplex().get_current_player()
+		return Group.objects.filter(case=self.case).order_by("name")[player_index]
+
+	def get_current_prices(self):
+		simplex = self.to_simplex()
+		prices = simplex.get_current_prices()
+		total_rent = self.case.rent
+		return map(lambda x: x * total_rent, prices)
+
+	def get_precision(self):
+		total_rent = self.case.rent
+		return total_rent * self.to_simplex().get_precision()
+
+	def current_player_choose(self, room_index):
+		'''
+		Current player choose a room_index
+		'''
+		simplex = self.to_simplex()
+		new_level = simplex.current_player_choose(room_index)
+		self.update(simplex)
+		return new_level
+
+	def generate_cuts(self):
+		simplex = self.to_simplex()
+		player_index = simplex.get_current_player()
+		player = Group.objects.filter(case=self.case).order_by("name")[player_index]
+		prices = self.get_current_prices()
+		return {
+			'player': player,
+			'prices': prices,
+		}
+
+	def get_suggested_division(self):
+		return self.to_simplex().get_suggested_division()
+
+	def update(simplex):
+		'''
+		Takes in a simplex object and update
+		@terminate: if terminate is true, save division scheme
+		'''
+		self.simplex = pickle.dumps(simplex)
+		self.save()
+
+	def to_simplex(self):
+		'''
+		Convert itself to a Simplex object 
+		'''
+		simplex = Simplex(self.dimension-1)
+		simplex.level = self.level
+		simplex.points = pickle.loads(self.points)
+		simplex.marker = self.marker
+		simpex.newPoint = self.newPoint
+		return simplex

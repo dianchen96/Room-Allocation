@@ -36,7 +36,7 @@ Room Allocation - {{ object.name }}
 			</thread>	
 			<tbody>
 				{% for room in rooms %}
-					<tr><th>{{ room }}</th></tr>
+					<tr><th class="room-name">{{ room }}</th></tr>
 				{% endfor %}
 			</tbody>
 		</table>
@@ -93,7 +93,6 @@ Room Allocation - {{ object.name }}
 			</div>
 			<div id="spinner" class="modal-body">
 				<!-- Waiting animation -->
-
 			</div>
 			<div class="modal-footer">
 				<button id="cancel_alloc" class="pure-button">Cancel</button>

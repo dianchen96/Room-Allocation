@@ -1,9 +1,10 @@
 from channels.routing import route
-from .consumers import group_add, group_receive, group_disconnect, test
+from .consumers import group_receive, group_signin
 
 channel_routing = [
-    route("websocket.connect", group_add, path=r'^/room/case/(?P<name>.*)/$'),
-    route("websocket.receive", group_receive, path=r'^/alloc/(?P<name>.*)/$'),
-    route("websocket.disconnect", group_disconnect),
+    # route("websocket.connect", group_add),
+    route("websocket.receive", group_signin, path=r'^/room/case/(?P<case_name>.*)/$'),
+    route("websocket.receive", group_receive, path=r'^/room/alloc/(?P<case_name>.*)/$'),
+    # route("websocket.disconnect", group_disconnect, path=r'^/room/case/(?P<case_name>.*)/$'),
     # route("http.request", test),
 ]

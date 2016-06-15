@@ -5,8 +5,7 @@ def get_owner(elements):
 	'''
 	Get the owner index by counting odd elements
 	'''
-	num = sum(map(lambda x: x % 2 != 0, self.points[self.newPoint]))
-	return str(chr(num + ord('A')))
+	return sum(map(lambda x: x % 2 != 0, self.points[self.newPoint]))
 
 
 class Point(object):
@@ -116,6 +115,11 @@ class Simplex(object):
 		Get the current player 
 		'''
 		return get_owner(self.points[self.newPoint])
+
+	def get_current_prices(self):
+		point = self.points[self.newPoint]
+		return point.transform()
+
 
 	def current_player_choose(self, label):
 		'''

@@ -1,41 +1,85 @@
+import json
+import pickle
 from django.core.exceptions import ObjectDoesNotExist
 from channels import Group as ChannelGroup
 from .models import Case, Allocation, Group
 
-def group_add(message, name):
-	ChannelGroup("case-%s" % name).add(message.reply_channel)
-	
+from channels.auth import channel_session_user_from_http
 
-def group_receive(message, name):
-	# try:
-	# 	case = Case.objects.get(pk=name)
-	# 	if message.reply_channel not in ChannelGroup("case-%s" % name).all():
-	# 		ChannelGroup("case-%s" % name).add(message.reply_channel)
-	# 		message.reply_channel.send({
-	# 			'success': True,
-	# 			'msg': 'You signed in as %s' % message['group'],
-	# 		})
-	# 	else:
-	# 		# Send error message to reply channel
-	# 		message.reply_channel.send({
-	# 			'success': False,
-	# 			'msg': 'Group %s has already signed in, please try again' % message['group'],
-	# 		})
 
-	# except ObjectDoesNotExist:
-	# 	# Send error message to reply channel
-	# 	message.reply_channel.send({
-	# 		'success': False,
-	# 		'msg': 'An internal error has occured, please try again later',
-	# 	})
-	pass
-	
+@channel_session_user_from_http
+def group_signin(message, case_name):
+	data = json.loads(message['text'])
+	try:
+		case = Case.objects.get(pk=case_name)
+		group = Group.objects.get(case=case, name=data["group_name"])
+		alloc = Allocation.objects.get(case=case)
+		add_channel(case.name, group.name, message.reply_channel)
+		message.reply_channel.send({
+			'text': json.dumps({
+				'success': True,
+			}),
+		})
+	except ObjectDoesNotExist:
+		# Send error message to reply channel
+		message.reply_channel.send({
+			'text': json.dumps({
+				'success': False,
+			}),
+		})
 
-def group_disconnect(message, name):
-	ChannelGroup("case-%s" % name).discard(message.reply_channel)
+@channel_session_user_from_http
+def group_receive(message, case_name):
+	data = json.loads(message['text'])
+	try:
+		case = Case.objects.get(pk=case_name)
+		group = Group.objects.get(case=case, name=data['group_name'])
+		alloc = Allocation.get(case=case)
+		# Make sure it is sent by current player
+		if alloc.get_curren_player().name == data['group_name']:
+			new_level = alloc.current_player_choose(data['choice'])
+			if new_level:
+				division = alloc.get_suggested_division()
+				message = {
+					'text': {
+						'success': True,
+						'is_proposal': True,
+						'division': division,
+						'precision': alloc.get_precision(),
+					},
+				}
+				channels = get_channels(case.name)
+				channel.send(message)
+			else:
+				choice = alloc.get_current_prices()
+				message = {
+					'success': True,
+					'is_proposal': False,
+					'choice': choice,
+				}
+				player = alloc.get_current_player()
+				channels = get_channel(case.name, player.name)
+				channels.send(message)
 
-	
-def test(message):
-	response = HttpResponse("Hello world! You asked for %s" % message.content['path'])
-	for chunk in AsgiHandler.encode_response(response):
-		message.reply_channel.send(chunk)
+
+	except ObjectDoesNotExist:
+		message = {
+			'is_proposal': False,
+		}
+		message.reply_channel.send(message)
+
+
+def add_channel(case_name, group_name, channel):
+	case_name = case_name.replace(" ", "")
+	group_name = group_name.replace(" ", "")
+	group_name = group_name.replace("&", "")
+	ChannelGroup("case_%s" % case_name).add(channel)
+	ChannelGroup("group_%s_%s" % (case_name, group_name)).add(channel)
+
+def get_channels(case_name):
+	case_name = case_name.replace(" ", "")
+	return ChannelGroup("case_%s" % case_name)
+
+def get_channel(case_name, group):
+	group_name = group_name.replace(" ", "")
+	return ChannelGroup("group_%s_%s" % (case_name, group))

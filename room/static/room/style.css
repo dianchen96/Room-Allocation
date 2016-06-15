@@ -67,6 +67,10 @@
 	color: red;
 }
 
+#spinner {
+	margin: 5em;
+}
+
 a:link {
     text-decoration: none !important;
 }
