@@ -25,14 +25,29 @@ class Room(models.Model):
 	def __unicode__(self):
 		return self.name
 
-		
+
 class Group(models.Model):
 	case = models.ForeignKey(Case, on_delete=models.CASCADE)
 	name = models.CharField(max_length=200)
 	num_of_renters = models.IntegerField(default=1)
+	is_online = models.BooleanField(default=False)
+	is_ready = models.BooleanField(default=False)
 
 	def __unicode__(self):
 		return self.name
+
+	def login(self):
+		self.is_online = True
+		self.save()
+
+	def ready(self):
+		self.is_ready = True
+		self.save()
+
+	def logout(self):
+		self.is_online = False
+		self.is_ready = False
+		self.save()
 
 
 class Allocation(models.Model):
@@ -53,6 +68,13 @@ class Allocation(models.Model):
 	def __unicode__(self):
 		return "Allocation for {}".format(self.case)
 
+	def can_begin(self):
+		groups = Group.objects.filter(case=self.case)
+		return groups.count() == len(filter(lambda g: g.is_online and g.is_ready, groups))
+
+	def group_number(self):
+		return Group.objects.filter(case=self.case).count()
+
 	def add_channel(self, group, channel):
 		channels = pickle.loads(self.channels)
 		channels[group.name] = channel
@@ -67,7 +89,7 @@ class Allocation(models.Model):
 		return channels[group.name]
 
 	def get_current_player(self):
-		player_index = self.to_simplex().get_current_player()
+		player_index = self.to_simplex().get_current_player() - 1
 		return Group.objects.filter(case=self.case).order_by("name")[player_index]
 
 	def get_current_prices(self):
@@ -102,7 +124,7 @@ class Allocation(models.Model):
 	def get_suggested_division(self):
 		return self.to_simplex().get_suggested_division()
 
-	def update(simplex):
+	def update(self, simplex):
 		'''
 		Takes in a simplex object and update
 		@terminate: if terminate is true, save division scheme
@@ -114,9 +136,5 @@ class Allocation(models.Model):
 		'''
 		Convert itself to a Simplex object 
 		'''
-		simplex = Simplex(self.dimension-1)
-		simplex.level = self.level
-		simplex.points = pickle.loads(self.points)
-		simplex.marker = self.marker
-		simpex.newPoint = self.newPoint
+		simplex = pickle.loads(self.simplex)
 		return simplex

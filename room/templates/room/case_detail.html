@@ -59,7 +59,7 @@ Room Allocation - {{ object.name }}
 			</thread>	
 			<tbody>
 				{% for renter in renters %}
-					<tr><th>{{ renter.name }}</th><th>{{ renter.num_of_renters }}</th></tr>
+					<tr><th class="group-name">{{ renter.name }}</th><th>{{ renter.num_of_renters }}</th></tr>
 				{% endfor %}
 			</tbody>
 	</table>

@@ -5,7 +5,7 @@ def get_owner(elements):
 	'''
 	Get the owner index by counting odd elements
 	'''
-	return sum(map(lambda x: x % 2 != 0, self.points[self.newPoint]))
+	return sum(map(lambda x: x % 2 != 0, elements))
 
 
 class Point(object):
@@ -218,9 +218,9 @@ class Simplex(object):
 
 	def get_suggested_division(self):
 		transformed = self.get_suggested_transform()
-		division = {}
+		division = []
 		for i in xrange(len(transformed)):
-			division[self.get_suggested_owner(i+1)] = {'room': i+1, 'rent':transformed[i]}
+			division.push({'room': i+1, 'rent':transformed[i]})
 
 	def get_precision(self):
 		return 2 * (1.0/ 2**self.level)

@@ -22,6 +22,7 @@ function try_add() {
 	window.socket.onopen = function(event) {
 		// Send message to websocket
 		var message = {
+			"sign_in": true,
 			"group_name": group_name,
 		};
 		window.socket.send(JSON.stringify(message));
@@ -40,9 +41,15 @@ function try_add() {
 		} else if (success == 1) {
 			// login success, modify websocket listener 
 			window.clearInterval(poll);
-			// Cache in room name
-			window.rooms = get_room_names();
+			// Cache in room name and group name
+			get_rooms_groups();
 			window.socket.onmessage = get_price_scheme;
+			ready_msg = {
+				'ready': true,
+				'group_name': group_name,
+			};
+			// Notify server that I am ready 
+			window.socket.send(JSON.stringify(ready_msg));
 		} 
 	}, 100);
 }
@@ -55,6 +62,7 @@ function get_price_scheme(message) {
 	var data = JSON.parse(message.data);
 	// TODO: render elements on page
 	$("#waiting_modal").modal("hide");
+	$("#alloc_scheme").modal();
 	var prices = $("price_scheme")[0]
 	while (prices.firstChild) {
 		prices.removeChild(prices.firstChild);
@@ -69,20 +77,59 @@ function get_price_scheme(message) {
 
 	var is_proposal = data.is_proposal;
 	if (is_proposal) {
+		var proposal = data.division
+		var title = document.createElement("h3");
+		title.appendChild(document.createTextNode("A Fair division scheme has come out"));
+		var table = document.createElement("table");
+		table.className = "pure-table pure-table-striped custom-table";
+		var thead = table.createTHead();
+		var trow = thead.insertRow(0);
+		var tcol1 = trow.insertCell(0);
+		var tcol2 = trow.insertCell(1);
+		var tcol3 = trow.insertCell(2);
+		trow1.innerHTML = "Group";
+		trow2.innerHTML = "Room";
+		trow3.innerHTML = "Rent";
+		var tbody = table.createTBody();
+		var row = tbody.insertRow(0);
+		for (var i = 0; i < proposal.length; i++) {
+			var division = proposal[i];
+			var cell1 = row.insertCell(0);
+			var cell2 = row.insertCell(1);
+			var cell3 = row.insertCell(2);
+			cell1.innerHTML = window.groups[i];
+			cell2.innerHTML = window.rooms[division.room];
+			cell3.innerHTML = division.rent;
+		}
+		prices.appendChild(table);
+		var precision = document.createElement("h3");
+		precision.appendChild(document.createTextNode("The precision of this division is " + proposal.precision));
+		
+		// TODO: To contunue or accept division	
 
 	} else {
-		var choice = data.choice;
+		var choices = data.choice;
 		for (var i = 0; i < choice.length; i++) {
 			// TODO: render elements
+			var choice = document.createElement("button");
+			choice.className = "pure-button pure-button-primary";
+			var text = document.createTextNode(window.rooms[i]+" "+choices[i]);
+			choice.appendChild(text);
+			prices.appendChild(choice);
 		}
 	}
 }
 
-function get_room_names() {
+function get_rooms_groups() {
 	room_names = $(".room-name");
-	return room_names.map(function (i, e) {
+	group_names = $(".group-name");
+	window.rooms = room_names.map(function (i, e) {
 		return e.innerHTML;
 	});
+	window.groups = group_names.map(function (i, e) {
+		return e.innerHTML;
+	});
+	window.groups.sort();
 }
 
 
