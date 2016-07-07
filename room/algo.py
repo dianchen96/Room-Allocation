@@ -28,11 +28,11 @@ class Point(object):
 		self.coordinates[key] = item
 
 	def __add__(self, other):
-		new_coordinates = map(add, izip(self.coordinates, other.coordinates))
+		new_coordinates = map(sum, izip(self.coordinates, other.coordinates))
 		return Point(coordinates=new_coordinates)
 
 	def __sub__(self, other):
-		new_coordinates = map(sub, izip(self.coordinates, other.coordinates))
+		new_coordinates = map(lambda l: l[0]-l[1], izip(self.coordinates, other.coordinates))
 		return Point(coordinates=new_coordinates)
 
 	def __mul__(self, scalar):
@@ -44,8 +44,7 @@ class Point(object):
 		return Point(coordinates=new_coordinates)
 
 	def dot(self, other):
-		new_coordinates = map(mul, izip(self.coordinates, other.coordinates))
-		return Point(coordinates=new_coordinates)
+		return sum(map(lambda l: l[0]*l[1], izip(self.coordinates, other.coordinates)))
 
 	def transform(self):
 		'''
@@ -82,13 +81,15 @@ class Simplex(object):
 		self.points = []
 		for i in xrange(self.dimension):
 			self.points.append(Point(
-					coordinates = [0 for _ in xrange(n)],
-					label = i+1
+					coordinates = [1 for _ in xrange(n-1)],
+					label = i+1,
+					level = 0
 				))
 		for col in xrange(n):
-			self.points[col][col] = 1
-		self.points[self.players] = Point(
-			coordinates = map(sum, izip(self.points[0]), self.points[self.players-1]),  
+			for i in xrange(col):
+				self.points[col][i] = 0
+		self.points[self.dimension-1] = Point(
+			coordinates = map(sum, izip(self.points[0].coordinates, self.points[self.dimension-2].coordinates)),  
 			level=1
 		)
 
@@ -109,12 +110,14 @@ class Simplex(object):
 			i = start
 			while i <= end:
 				self.points[i+where] = self.points[i]
+				i += 1
+
 
 	def get_current_player(self):
 		'''
 		Get the current player 
 		'''
-		return get_owner(self.points[self.newPoint])
+		return get_owner(self.points[self.newPoint].coordinates)
 
 	def get_current_prices(self):
 		point = self.points[self.newPoint]
@@ -182,7 +185,7 @@ class Simplex(object):
 			self.newPoint = 0
 		elif pivot == dimension-1 and self.marker < dimension-2:
 			tmp = self.points[pivot] - self.points[pivot-1]
-			check = sum(tmp.dot(self.points[0]).coordinates)
+			check = tmp.dot(self.points[0])
 			if check % 2 == 0:
 				self.shift(0, dimension-2, 1)
 				self.marker += 1
@@ -208,19 +211,25 @@ class Simplex(object):
 		assert False
 
 	def get_suggested_transform(self):
-		points = zip(*filter(lambda i, p: i != self.newPoint, enumerate(self.points)))[1]
+		points = []
+		for i, p in enumerate(self.points):
+			if i != self.newPoint:
+				points.append(p)
+
 		sum_transform = reduce(
-			lambda a,b: map(add, izip(a, b)),
+			lambda a,b: map(sum, izip(a, b)),
 			map(lambda p: p.transform(), points),
-			[0 for _ in xrange(self.players)])
-		sum_transform = map(lambda x: x / float(self.players))
-		return sum_transform.coordinates
+			[0 for _ in xrange(self.players)]
+		)
+		sum_transform = map(lambda x: x / float(self.players), sum_transform)
+		return sum_transform
 
 	def get_suggested_division(self):
 		transformed = self.get_suggested_transform()
 		division = []
 		for i in xrange(len(transformed)):
-			division.push({'room': i+1, 'rent':transformed[i]})
+			division.append({'room': i, 'rent':transformed[i]})
+		return division
 
 	def get_precision(self):
 		return 2 * (1.0/ 2**self.level)

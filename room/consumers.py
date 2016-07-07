@@ -31,52 +31,51 @@ def group_receive(message, case_name):
 				simplex = Simplex(alloc.group_number())
 				alloc.update(simplex)
 				choice = alloc.get_current_prices()
-				print(choice)
-				message = {
-					'text': {
+				player = alloc.get_current_player()
+				channels = get_channel(case.name, player.name)
+				channels.send({
+					'text': json.dumps({
 						'success': True,
 						'is_proposal': False,
 						'choice': choice,
-					}
-				}
-				player = alloc.get_current_player()
-				channels = get_channel(case.name, player.name)
-				channels.send(message)
+					}),
+				})
+
 		else:
 			# Make sure it is sent by current player
-			if alloc.get_curren_player().name == data['group_name']:
+			if alloc.get_current_player().name == group.name:
+				print("%s chosed %s" % (group, data['choice']))
 				new_level = alloc.current_player_choose(data['choice'])
 				if new_level:
 					division = alloc.get_suggested_division()
-					message = {
-						'text': {
+					channels = get_channels(case.name)
+					channels.send({
+						'text': json.dumps({
 							'success': True,
 							'is_proposal': True,
 							'division': division,
 							'precision': alloc.get_precision(),
-						},
-					}
-					channels = get_channels(case.name)
-					channel.send(message)
+						}),
+					})
 				else:
 					choice = alloc.get_current_prices()
-					message = {
-						'text': {
+					player = alloc.get_current_player()
+					channels = get_channel(case.name, player.name)
+					channels.send({						
+						'text': json.dumps({
 							'success': True,
 							'is_proposal': False,
 							'choice': choice,
-						}
-					}
-					player = alloc.get_current_player()
-					channels = get_channel(case.name, player.name)
-					channels.send(message)
+						}),
+					})
 
 
 	except ObjectDoesNotExist:
-		message = {
-			'is_proposal': False,
-		}
-		message.reply_channel.send(message)
+		message.reply_channel.send({
+			'text': json.dumps({
+				'success': False,
+			}),
+		})
 
 
 def add_channel(case_name, group_name, channel):
@@ -93,4 +92,5 @@ def get_channels(case_name):
 def get_channel(case_name, group_name):
 	case_name = case_name.replace(" ", "")
 	group_name = group_name.replace(" ", "")
+	group_name = group_name.replace("&", "")
 	return ChannelGroup("group_%s_%s" % (case_name, group_name))

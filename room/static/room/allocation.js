@@ -34,15 +34,14 @@ function try_add() {
 	// Polling every 0.1s to check response
 	var poll = window.setInterval(function() {
 		if (success == -1) {
-			// login failed, close websocket and render error message
 			window.clearInterval(poll);
 			window.socket.close();
-			// TODO: render error message
 		} else if (success == 1) {
 			// login success, modify websocket listener 
 			window.clearInterval(poll);
 			// Cache in room name and group name
 			get_rooms_groups();
+			window.group_name = group_name;
 			window.socket.onmessage = get_price_scheme;
 			ready_msg = {
 				'ready': true,
@@ -62,8 +61,8 @@ function get_price_scheme(message) {
 	var data = JSON.parse(message.data);
 	// TODO: render elements on page
 	$("#waiting_modal").modal("hide");
-	$("#alloc_scheme").modal();
-	var prices = $("price_scheme")[0]
+	$("#alloc_modal").modal();
+	var prices = $("#price_scheme")[0]
 	while (prices.firstChild) {
 		prices.removeChild(prices.firstChild);
 	}
@@ -87,9 +86,9 @@ function get_price_scheme(message) {
 		var tcol1 = trow.insertCell(0);
 		var tcol2 = trow.insertCell(1);
 		var tcol3 = trow.insertCell(2);
-		trow1.innerHTML = "Group";
-		trow2.innerHTML = "Room";
-		trow3.innerHTML = "Rent";
+		tcol1.innerHTML = "Group";
+		tcol2.innerHTML = "Room";
+		tcol3.innerHTML = "Rent";
 		var tbody = table.createTBody();
 		var row = tbody.insertRow(0);
 		for (var i = 0; i < proposal.length; i++) {
@@ -109,13 +108,27 @@ function get_price_scheme(message) {
 
 	} else {
 		var choices = data.choice;
-		for (var i = 0; i < choice.length; i++) {
+		for (var i = 0; i < choices.length; i++) {
 			// TODO: render elements
 			var choice = document.createElement("button");
-			choice.className = "pure-button pure-button-primary";
-			var text = document.createTextNode(window.rooms[i]+" "+choices[i]);
+			choice.className = "pure-button pure-u-1-2 custom-price-button";
+			choice.id = "room-" + (i+1).toString();
+			var text = document.createTextNode(window.rooms[i]+" with monthly rent $"+choices[i]+" per person");
 			choice.appendChild(text);
 			prices.appendChild(choice);
+			choice.onclick = function(event) {
+				event.preventDefault();
+				// Notify server the player's choice
+				choice_index = parseInt(choice.id.split("-")[1]);
+				var message = {
+					'group_name': window.group_name,
+					'choice': choice_index,
+				};
+				window.socket.send(JSON.stringify(message));
+				$("#waiting_modal").modal();
+				$("#alloc_modal").modal("hide");
+				return false;
+			};
 		}
 	}
 }

@@ -15,7 +15,7 @@ class Case(models.Model):
 	rent = models.IntegerField(default=0)
 
 	def __unicode__(self):
-		return "{}, {}".format(self.name, self.created_date)
+		return self.name
 
 class Room(models.Model):
 	case = models.ForeignKey(Case, on_delete=models.CASCADE)
@@ -52,21 +52,20 @@ class Group(models.Model):
 
 class Allocation(models.Model):
 	case = models.OneToOneField(Case, on_delete=models.CASCADE, primary_key=True)
-	channels = models.TextField(default=None, null=True)
-
 	is_complete = models.BooleanField(default=False)
-	simplex = models.TextField(default=None, null=True)
-	# Stored scheme, if allocation has completed
-	scheme = models.TextField(default=None, null=True)
 
 	def __init__(self, case_name, *args, **kwargs):
 		super(Allocation, self).__init__(*args, **kwargs)
 		self.case = Case.objects.get(name=case_name)
-		self.channels = pickle.dumps({})
-		self.simplex = pickle.dumps(None)
 
 	def __unicode__(self):
-		return "Allocation for {}".format(self.case)
+		return self.case
+
+	def get_simplex_path(self):
+		return "room/simplex/%s" % self.case
+
+	def get_scheme_path(self):
+		return "room/scheme/%s" % self.case
 
 	def can_begin(self):
 		groups = Group.objects.filter(case=self.case)
@@ -75,21 +74,8 @@ class Allocation(models.Model):
 	def group_number(self):
 		return Group.objects.filter(case=self.case).count()
 
-	def add_channel(self, group, channel):
-		channels = pickle.loads(self.channels)
-		channels[group.name] = channel
-		self.channels = pickle.dumps(channels)
-		self.save()
-
-	def get_channels(self):
-		return pickle.loads(channels)
-
-	def get_channel(self, group):
-		channels = pickle.loads(self.channels)
-		return channels[group.name]
-
 	def get_current_player(self):
-		player_index = self.to_simplex().get_current_player() - 1
+		player_index = self.to_simplex().get_current_player()
 		return Group.objects.filter(case=self.case).order_by("name")[player_index]
 
 	def get_current_prices(self):
@@ -129,12 +115,14 @@ class Allocation(models.Model):
 		Takes in a simplex object and update
 		@terminate: if terminate is true, save division scheme
 		'''
-		self.simplex = pickle.dumps(simplex)
-		self.save()
+		simplex_text = pickle.dumps(simplex)
+		with open(self.get_simplex_path(), "w+") as file_:
+			file_.write(simplex_text)
 
 	def to_simplex(self):
 		'''
 		Convert itself to a Simplex object 
 		'''
-		simplex = pickle.loads(self.simplex)
-		return simplex
+		with open(self.get_simplex_path(), "r") as file_:
+			simplex = file_.read()
+		return pickle.loads(simplex)
