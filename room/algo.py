@@ -1,5 +1,7 @@
+from __future__ import division
 from itertools import izip
 from operator import add, sub, mul
+
 
 def get_owner(elements):
 	'''
@@ -199,7 +201,7 @@ class Simplex(object):
 				self.points[self.marker].level = self.level
 				self.newPoint = self.marker
 
-		print(self.level)
+		# print(self.level)
 		return prev_level != self.level
 
 	def get_suggested_owner(self, label):
