@@ -5,13 +5,17 @@
 .custom-menu-list {
 	background-color: #58ABF5;
 	width: 100%;
-	height: 30px;
+	height: 36px;
 	display:inline-block;
 }
 
 .custom-menu-item {
 	display: inline-block;
 	font-size: 15px;
+}
+
+.custom-menu-item:hover {
+	text-decoration: none !important;
 }
 
 .custom-form {
@@ -44,16 +48,43 @@
 	font-family: 'Helvetica Neue';
 }
 
-.custom-case-title {
+.custom-toggle {
 	color: #777; 
 	font-family: 'Helvetica Neue', sans-serif; 
-	font-size: 105px;
-	letter-spacing: -1px; 
+	font-size: 14px;
+	width: 95%;
+	letter-spacing: 1px; 
 	line-height: 1;
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+.custom-create-title {
+	font-size: 16px;
+}
+
+.err-msg {
+	color: red;
+}
+
+.custom-price-button {
+	color: #777; 
+	font-family: 'Helvetica Neue', sans-serif; 
+	font-size: 14px;
+	vertical-align: text-top;
+	letter-spacing: 1px; 
+	line-height: 1;
+	text-align: left;
+	margin: 3px;
+	border: 1px solid;
+}
+
+#spinner {
+	margin: 5em;
 }
 
 a:link {
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 a:visited {
@@ -67,6 +98,10 @@ a:hover {
 a:active {
     text-decoration: underline;
 }
+
+h4 { font-family: 'Open Sans'; color: #777;}
+ 
+h3 { color: #777 !important; font-family: 'Helvetica Neue', sans-serif !important letter-spacing: -1px; line-height: 1;}
 
 h2 { color: #777; font-family: 'Open Sans', sans-serif; font-weight: 300; line-height: 32px; margin: 0 0 72px; text-align: center; }
 

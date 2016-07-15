@@ -17,6 +17,9 @@ class Case(models.Model):
 	def __unicode__(self):
 		return self.name
 
+	def get_num_groups(self):
+		return Group.objects.filter(case=self).count()
+
 class Room(models.Model):
 	case = models.ForeignKey(Case, on_delete=models.CASCADE)
 	name = models.CharField(max_length=200)
@@ -33,6 +36,9 @@ class Group(models.Model):
 	is_online = models.BooleanField(default=False)
 	is_ready = models.BooleanField(default=False)
 
+	accept = models.BooleanField(default=False)
+	voted = models.BooleanField(default=False)
+
 	def __unicode__(self):
 		return self.name
 
@@ -48,6 +54,12 @@ class Group(models.Model):
 		self.is_online = False
 		self.is_ready = False
 		self.save()
+
+	def vote(self, choice):
+		self.accept = choice
+		self.voted = True
+		self.save()
+
 
 
 class Allocation(models.Model):
@@ -71,6 +83,22 @@ class Allocation(models.Model):
 		groups = Group.objects.filter(case=self.case)
 		return groups.count() == len(filter(lambda g: g.is_online and g.is_ready, groups))
 
+	def can_archive(self):
+		if not self.is_finished_voting():
+			return False
+		return Group.objects.filter(case=self.case, accept=True).count() == self.case.get_num_groups()
+
+	def is_finished_voting(self):
+		# print("num_voted: %d, expected: %d" %(self.num_voted, self.case.get_num_groups()))
+		return Group.objects.filter(case=self.case, voted=True).count() == self.case.get_num_groups()
+
+	def clear_voting(self):
+		for group in Group.objects.filter(case=self.case):
+			group.voted = False
+			voted = False
+			group.save()
+
+
 	def group_number(self):
 		return Group.objects.filter(case=self.case).count()
 
@@ -81,12 +109,18 @@ class Allocation(models.Model):
 	def get_current_prices(self):
 		simplex = self.to_simplex()
 		prices = simplex.get_current_prices()
-		total_rent = self.case.rent
-		return map(lambda x: x * total_rent, prices)
+		return map(lambda x: self.transform_price(x), prices)
 
 	def get_precision(self):
-		total_rent = self.case.rent
-		return total_rent * self.to_simplex().get_precision()
+		splitting_rent = int(self.case.rent / 2)
+		return splitting_rent * self.to_simplex().get_precision()
+
+	def transform_price(self, raw_price):
+		num_groups = self.case.get_num_groups()
+		base_rent = int(self.case.rent / 2)
+		effective_rent = self.case.rent - base_rent
+		return int(base_rent / num_groups) + raw_price * effective_rent
+
 
 	def current_player_choose(self, room_index):
 		'''
@@ -108,7 +142,12 @@ class Allocation(models.Model):
 		}
 
 	def get_suggested_division(self):
-		return self.to_simplex().get_suggested_division()
+		division = self.to_simplex().get_suggested_division()
+		# Rescale division
+		for d in division:
+			d['rent'] = self.transform_price(d['rent'])
+		return division
+
 
 	def update(self, simplex):
 		'''

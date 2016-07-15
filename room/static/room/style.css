@@ -79,6 +79,11 @@
 	border: 1px solid;
 }
 
+.custom-button {
+	margin-right: 5px;
+}
+
+
 
 #spinner {
 	margin: 5em;
@@ -100,7 +105,7 @@ a:active {
     text-decoration: underline;
 }
 
-h4 { font-family: 'Open Sans'; }
+h4 { font-family: 'Open Sans'; color: #777;}
  
 h3 { color: #777 !important; font-family: 'Helvetica Neue', sans-serif !important letter-spacing: -1px; line-height: 1;}
 
