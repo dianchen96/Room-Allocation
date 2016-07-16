@@ -1,6 +1,7 @@
 window.case_url = new String(window.location).replace("http", "ws");
 window.alloc_url = new String(window.case_url).replace("case", "alloc");
 window.socket;
+window.group_name;
 
 /*
 	Function triggered by submitting identity form
@@ -61,8 +62,12 @@ function get_price_scheme(message) {
 	var data = JSON.parse(message.data);
 	// TODO: render elements on page
 	$("#waiting_modal").modal("hide");
-	$("#alloc_modal").modal();
-	var prices = $("#price_scheme")[0]
+	if (data.is_proposal) {
+		var prices = $("#division_scheme")[0];
+	} else {
+		var prices = $("#price_scheme")[0];
+	}
+
 	while (prices.firstChild) {
 		prices.removeChild(prices.firstChild);
 	}
@@ -76,6 +81,7 @@ function get_price_scheme(message) {
 
 	var is_proposal = data.is_proposal;
 	if (is_proposal) {
+		$("#division_modal").modal();
 		var proposal = data.division
 		var table = document.createElement("table");
 		table.className = "pure-table custom-table";
@@ -104,19 +110,41 @@ function get_price_scheme(message) {
 		precision.appendChild(document.createTextNode("The precision of this division is " + data.precision));
 		prices.appendChild(precision)
 		// TODO: To contunue or accept division	
-		var accept = document.createElement("button");
-		accept.className = "pure-button pure-primary-button";
-		accept.innerHTML = "Accept";
-		var contunue = document.createElement("button");
-		contunue.className = "pure-button";
-		contunue.innerHTML = "Continue";
+		var go_on = document.createElement("button");
+		go_on.className = "pure-button pure-button-primary custom-button";
+		go_on.innerHTML = "Continue";
 
+		// var accept = document.createElement("button");
+		// accept.className = "pure-button pure-button-primary custom-button";
+		// accept.innerHTML = "Accept";
 
+		// accept.onclick = function(event) {
+		// 	event.preventDefault();
+		// 	var message = {
+		// 		"vote": true,
+		// 		"group_name": window.group_name,
+		// 	};
+		// 	window.socket.send(JSON.stringify(message));
+		// 	$("#division_modal").modal("hide");
+		// 	$("#waiting_modal").modal();
+		// };
 
-		prices.appendChild(accept);
-		prices.appendChild(contunue);
+		go_on.onclick = function(event) {
+			event.preventDefault();
+			var message = {
+				"vote": true,
+				"group_name": window.group_name,
+			};
+			window.socket.send(JSON.stringify(message));
+			$("#division_modal").modal("hide");
+			$("#waiting_modal").modal();
+		};
+
+		// prices.appendChild(accept);
+		prices.appendChild(go_on);
 
 	} else {
+		$("#alloc_modal").modal();
 		var choices = data.choice;
 		for (var i = 0; i < choices.length; i++) {
 			// TODO: render elements
@@ -135,8 +163,8 @@ function get_price_scheme(message) {
 					'choice': choice_index,
 				};
 				window.socket.send(JSON.stringify(message));
-				$("#waiting_modal").modal();
 				$("#alloc_modal").modal("hide");
+				$("#waiting_modal").modal();
 				return false;
 			};
 		}

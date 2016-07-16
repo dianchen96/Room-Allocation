@@ -1,0 +1,24 @@
+{% extends 'room/base.html' %}
+{% load staticfiles%}
+
+{% block title %}
+Room Allocation - About
+{% endblock %}
+
+{% block head %}
+{{ block.super }}
+{% endblock %}
+
+{% block body %}
+{{ block.super }}
+<xmp theme="united" style="display:none;">
+## Room-Allocation: Spernel's labeling for fair rent division
+---------------
+### How does it work?
+- This is a proof-of-concept web application inspired by [Dr. Francis Su's paper](https://www.math.hmc.edu/~su/papers.dir/rent.pdf). Essentially, it applies Spernel's labeling to generate an envy-free rent division.
+
+- During each turn, the algorithm asks a user to choose the room 
+
+</xmp>
+<script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>
+{% endblock %}

@@ -108,6 +108,10 @@ def create_case(request):
 	else:
 		return HttpResponseNotFound('<h3>Page not found</h3>')
 
+def about(request):
+	return render(request, 'room/about.html')
+
+
 # Method for creating a room
 def create_room(request):
 	if request.method == 'POST':

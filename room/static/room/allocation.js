@@ -111,14 +111,25 @@ function get_price_scheme(message) {
 		prices.appendChild(precision)
 		// TODO: To contunue or accept division	
 		var go_on = document.createElement("button");
-		go_on.className = "pure-button custom-button";
+		go_on.className = "pure-button pure-button-primary custom-button";
 		go_on.innerHTML = "Continue";
 
-		var accept = document.createElement("button");
-		accept.className = "pure-button pure-button-primary custom-button";
-		accept.innerHTML = "Accept";
+		// var accept = document.createElement("button");
+		// accept.className = "pure-button pure-button-primary custom-button";
+		// accept.innerHTML = "Accept";
 
-		accept.onclick = function(event) {
+		// accept.onclick = function(event) {
+		// 	event.preventDefault();
+		// 	var message = {
+		// 		"vote": true,
+		// 		"group_name": window.group_name,
+		// 	};
+		// 	window.socket.send(JSON.stringify(message));
+		// 	$("#division_modal").modal("hide");
+		// 	$("#waiting_modal").modal();
+		// };
+
+		go_on.onclick = function(event) {
 			event.preventDefault();
 			var message = {
 				"vote": true,
@@ -129,18 +140,7 @@ function get_price_scheme(message) {
 			$("#waiting_modal").modal();
 		};
 
-		go_on.onclick = function(event) {
-			event.preventDefault();
-			var message = {
-				"vote": false,
-				"group_name": window.group_name,
-			};
-			window.socket.send(JSON.stringify(message));
-			$("#division_modal").modal("hide");
-			$("#waiting_modal").modal();
-		};
-
-		prices.appendChild(accept);
+		// prices.appendChild(accept);
 		prices.appendChild(go_on);
 
 	} else {

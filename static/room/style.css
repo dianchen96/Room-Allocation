@@ -1,4 +1,6 @@
 .custom-menu-bar {
+	position: absolute;
+	top: 0;
 	height: 30px;
 }
 
@@ -78,6 +80,12 @@
 	margin: 3px;
 	border: 1px solid;
 }
+
+.custom-button {
+	margin-right: 5px;
+}
+
+
 
 #spinner {
 	margin: 5em;

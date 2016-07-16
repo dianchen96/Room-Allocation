@@ -1,4 +1,7 @@
 .custom-menu-bar {
+	position: absolute;
+	margin-bottom: 30px;
+	top: 0 !important;
 	height: 30px;
 }
 

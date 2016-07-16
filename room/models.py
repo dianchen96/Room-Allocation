@@ -76,8 +76,8 @@ class Allocation(models.Model):
 	def get_simplex_path(self):
 		return "room/simplex/%s" % self.case
 
-	def get_scheme_path(self):
-		return "room/scheme/%s" % self.case
+	def get_division_path(self):
+		return "room/division/%s" % self.case
 
 	def can_begin(self):
 		groups = Group.objects.filter(case=self.case)
@@ -98,6 +98,20 @@ class Allocation(models.Model):
 			voted = False
 			group.save()
 
+	def archive_division(self):
+		division = self.get_suggested_division()
+		division_text = pickle.dumps(division)
+		with open(self.get_division_path(), "w+") as file_:
+			file_.write(division_text)
+		self.is_complete = True
+		self.save()
+
+	def get_division(self):
+		if not self.is_complete:
+			return None
+		with open(self.get_division_path(), "r") as file_:
+			division_text = file_.read()
+		return pickle.loads(division_text)
 
 	def group_number(self):
 		return Group.objects.filter(case=self.case).count()
@@ -119,7 +133,7 @@ class Allocation(models.Model):
 		num_groups = self.case.get_num_groups()
 		base_rent = int(self.case.rent / 2)
 		effective_rent = self.case.rent - base_rent
-		return int(base_rent / num_groups) + raw_price * effective_rent
+		return int(base_rent / num_groups) + int(raw_price * effective_rent)
 
 
 	def current_player_choose(self, room_index):
@@ -157,6 +171,7 @@ class Allocation(models.Model):
 		simplex_text = pickle.dumps(simplex)
 		with open(self.get_simplex_path(), "w+") as file_:
 			file_.write(simplex_text)
+
 
 	def to_simplex(self):
 		'''
