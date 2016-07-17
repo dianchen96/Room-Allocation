@@ -43,14 +43,34 @@ class CaseView(DetailView):
 
 	def get_context_data(self, **kwargs):
 		context = super(CaseView, self).get_context_data(**kwargs)
-		context['rooms'] = Room.objects.filter(case=self.object)
-		context['groups'] = Group.objects.filter(case=self.object)
+		groups = Group.objects.filter(case=self.object).order_by("name")
+		context['groups'] = groups
+		rooms = Room.objects.filter(case=self.object).order_by("name")
+		context['rooms'] = rooms
 		context['case_form'] = ReadOnlyCaseForm(instance=self.object)
-		context['rooms'] = Room.objects.filter(case=self.object)
 		context['renters'] = Group.objects.filter(case=self.object)
 		context['room_form'] = RoomForm(initial={'case':self.object})
 		context['group_form'] = GroupForm(initial={'case':self.object})
 		context['session_form'] = SessionForm(self.object)
+		# If case is completed, show scheme and don't show login
+		alloc = Allocation.objects.get(case=self.object)
+		# print(alloc.is_complete)
+		if alloc.is_complete():
+			proposal_raw = alloc.get_archived_division()
+			proposal = []
+			for i, division in enumerate(proposal_raw):
+				proposal.append({
+					'group': groups[i],
+					'room': rooms[division['room']],
+					'rent': division['rent'],
+				})
+			context['proposal'] = proposal
+
+		# If case is not able to begin, disable the button
+		group_num = Group.objects.filter(case=self.object).count()
+		room_num = Room.objects.filter(case=self.object).count()
+		context['can_begin'] = group_num != 0 and group_num == room_num
+
 		# If there is err_msg in GET query, include it in context
 		if self.request.GET.get("err"):
 			err_code = int(self.request.GET.get("err"))

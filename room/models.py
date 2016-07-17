@@ -1,11 +1,11 @@
 from __future__ import unicode_literals
 
 import datetime
+import os.path as osp
 import pickle
 from django.db import models
 from django.conf import settings
 from algo import Simplex
-
 
 
 class Case(models.Model):
@@ -64,7 +64,6 @@ class Group(models.Model):
 
 class Allocation(models.Model):
 	case = models.OneToOneField(Case, on_delete=models.CASCADE, primary_key=True)
-	is_complete = models.BooleanField(default=False)
 
 	def __init__(self, case_name, *args, **kwargs):
 		super(Allocation, self).__init__(*args, **kwargs)
@@ -81,12 +80,17 @@ class Allocation(models.Model):
 
 	def can_begin(self):
 		groups = Group.objects.filter(case=self.case)
-		return groups.count() == len(filter(lambda g: g.is_online and g.is_ready, groups))
+		rooms = Room.objects.filter(case=self.case)
+		return rooms.count() == groups.count() and \
+			groups.count() == len(filter(lambda g: g.is_online and g.is_ready, groups))
 
 	def can_archive(self):
 		if not self.is_finished_voting():
 			return False
 		return Group.objects.filter(case=self.case, accept=True).count() == self.case.get_num_groups()
+
+	def is_complete(self):
+		return osp.isfile(self.get_division_path())
 
 	def is_finished_voting(self):
 		# print("num_voted: %d, expected: %d" %(self.num_voted, self.case.get_num_groups()))
@@ -103,8 +107,11 @@ class Allocation(models.Model):
 		division_text = pickle.dumps(division)
 		with open(self.get_division_path(), "w+") as file_:
 			file_.write(division_text)
-		self.is_complete = True
-		self.save()
+
+	def get_archived_division(self):
+		with open(self.get_division_path(), "r") as file_:
+			division_text = file_.read()
+		return pickle.loads(division_text)
 
 	def get_division(self):
 		if not self.is_complete:

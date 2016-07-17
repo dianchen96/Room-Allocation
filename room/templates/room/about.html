@@ -12,12 +12,24 @@ Room Allocation - About
 {% block body %}
 {{ block.super }}
 <xmp theme="united" style="display:none;">
-## Room-Allocation: Spernel's labeling for fair rent division
+## Room-Allocation: Spernel's labeling algorithm for fair rent division 
+---------------
+### What is it?
+Room-Allocation is a web application that helps you solve the fair rent division problem. Since people's preference for goods are related to their prices, it is often hard to come up with a fair rent division such that every participant is satisfied with the price as well as the room. We are here to help you generate a fair division scheme, and giving everyone that shares the rent an equal opportunity to participate.
+
 ---------------
 ### How does it work?
 - This is a proof-of-concept web application inspired by [Dr. Francis Su's paper](https://www.math.hmc.edu/~su/papers.dir/rent.pdf). Essentially, it applies Spernel's labeling to generate an envy-free rent division.
 
-- During each turn, the algorithm asks a user to choose the room 
+- During each turn, the algorithm comes up with a pricing scheme which contains a price for each room, and asks a user to choose the room he prefers. The algorithm then chooses another user to ask with a slightly different pricing scheme, repeating itself until every user chooses a different room for the same pricing scheme, within a reasonable accuracy.
+
+- When the algorithm terminates, it asks every participant whether they will go for the division scheme. If every one agrees, it archives the solution, and the solution can be seen every time a user access the case page. If one of the participant chooses to go on for a more accurate scheme, the procedure will continue.
+
+- It can be mathematically proven that it is possible to come up with a scheme such that every participant will choose a different room. Essentially, it is a n-dimensional spernel labeling problem.
+
+----------------
+### Source code
+- This project is a web app based on Django. If you would like to see the source code, please visit its project repo on [github](https://github.com/dianchen96/Room-Allocation).
 
 </xmp>
 <script src="http://strapdownjs.com/v/0.2/strapdown.js"></script>

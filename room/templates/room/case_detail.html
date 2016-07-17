@@ -74,7 +74,28 @@ Room Allocation - {{ object.name }}
 			</fieldset>
 		</form>
 	</div>
-	<hr>
+	{% if proposal %}
+		<button class="pure-button custom-toggle" data-toggle="collapse" data-target="#division-info">Division Scheme</button>
+		<div id="division-info" class="collapse in">
+			<table class="pure-table pure-table-horizontal custom-table">
+				<thead>
+					<tr>
+						<th>Group</th><th>Room</th><th>Rent</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for division in proposal %}
+						<tr>
+							<th>{{ division.group }}</th>
+							<th>{{ division.room }}</th>
+							<th>{{ division.rent }}</th>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	{% endif %}
+
 	<h3>Choose Your Identity</h3>
 	<!--If user has selected an invalid identity and redirected back -->
 	<p class="err-msg">{{ err_msg }}</p>
@@ -82,7 +103,11 @@ Room Allocation - {{ object.name }}
 		{% csrf_token %}
 		<fieldset>
 			{{ session_form }}
-			<button id="confirm_identity" class="pure-button pure-button-primary">Start Allocation</button> 
+			{% if can_begin %}
+				<button id="confirm_identity" class="pure-button pure-button-primary">Start Allocation</button> 
+			{% else %}
+				<button id="confirm_identity" class="pure-button pure-button-disabled" disabled>Start Allocation</button>
+			{% endif %}
 	</fieldset>
 	</form>
 	<!-- Waiting modal -->

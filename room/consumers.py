@@ -44,20 +44,24 @@ def group_receive(message, case_name):
 		elif "vote" in data:
 			# Collect vote from groups: whether to archive division or continue
 			print("%s voted" % group.name)
-			group.vote(data['vote'])
+			group.vote(data["vote"])
 			if alloc.is_finished_voting():
-				# Continue dividing
-				alloc.clear_voting()
-				choice = alloc.get_current_prices()
-				player = alloc.get_current_player()
-				channels = get_channel(case.name, player.name)
-				channels.send({						
-					'text': json.dumps({
-						'success': True,
-						'is_proposal': False,
-						'choice': choice,
-					}),
-				})
+				if alloc.can_archive():
+					print("Start archive %s" % case.name)
+					alloc.archive_division()
+				else:
+					# Continue dividing
+					alloc.clear_voting()
+					choice = alloc.get_current_prices()
+					player = alloc.get_current_player()
+					channels = get_channel(case.name, player.name)
+					channels.send({						
+						'text': json.dumps({
+							'success': True,
+							'is_proposal': False,
+							'choice': choice,
+						}),
+					})
 
 		else:
 			# Make sure it is sent by current player

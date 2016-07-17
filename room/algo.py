@@ -181,7 +181,7 @@ class Simplex(object):
 		elif pivot == self.marker+1 and pivot == dimension-1:
 			self.shift(0, pivot-1, 1)
 			self.marker = 0
-			self.points[0] = self.points[dimension-1] / 2
+			self.points[0] = self.points[dimension-1] * 0.5
 			self.level -= 1
 			self.points[0].level = self.level
 			self.newPoint = 0
@@ -201,7 +201,6 @@ class Simplex(object):
 				self.points[self.marker].level = self.level
 				self.newPoint = self.marker
 
-		# print(self.level)
 		return prev_level != self.level
 
 	def get_suggested_owner(self, label):
