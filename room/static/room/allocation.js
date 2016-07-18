@@ -101,7 +101,6 @@ function get_price_scheme(message) {
 			var cell2 = row.insertCell(1);
 			var cell3 = row.insertCell(2);
 			cell1.innerHTML = window.groups[i];
-			var num_renters = 
 			cell2.innerHTML = window.rooms[division.room];
 			cell3.innerHTML = division.rent;
 		}
@@ -110,26 +109,15 @@ function get_price_scheme(message) {
 		precision.appendChild(document.createTextNode("The precision of this division is " + data.precision));
 		prices.appendChild(precision)
 		// TODO: To contunue or accept division	
+		var accept = document.createElement("button");
+		accept.className = "pure-button pure-button-primary custom-button";
+		accept.innerHTML = "Accept";
+
 		var go_on = document.createElement("button");
-		go_on.className = "pure-button pure-button-primary custom-button";
+		go_on.className = "pure-button custom-button";
 		go_on.innerHTML = "Continue";
 
-		// var accept = document.createElement("button");
-		// accept.className = "pure-button pure-button-primary custom-button";
-		// accept.innerHTML = "Accept";
-
-		// accept.onclick = function(event) {
-		// 	event.preventDefault();
-		// 	var message = {
-		// 		"vote": true,
-		// 		"group_name": window.group_name,
-		// 	};
-		// 	window.socket.send(JSON.stringify(message));
-		// 	$("#division_modal").modal("hide");
-		// 	$("#waiting_modal").modal();
-		// };
-
-		go_on.onclick = function(event) {
+		accept.onclick = function(event) {
 			event.preventDefault();
 			var message = {
 				"vote": true,
@@ -140,7 +128,18 @@ function get_price_scheme(message) {
 			$("#waiting_modal").modal();
 		};
 
-		// prices.appendChild(accept);
+		go_on.onclick = function(event) {
+			event.preventDefault();
+			var message = {
+				"vote": false,
+				"group_name": window.group_name,
+			};
+			window.socket.send(JSON.stringify(message));
+			$("#division_modal").modal("hide");
+			$("#waiting_modal").modal();
+		};
+
+		prices.appendChild(accept);
 		prices.appendChild(go_on);
 
 	} else {
@@ -180,7 +179,8 @@ function get_rooms_groups() {
 	window.groups = group_names.map(function (i, e) {
 		return e.innerHTML;
 	});
-	window.groups.sort();
+	window.groups = window.groups.sort();
+	window.rooms = window.rooms.sort();
 }
 
 
