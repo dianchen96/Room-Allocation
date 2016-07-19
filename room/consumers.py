@@ -43,12 +43,20 @@ def group_receive(message, case_name):
 
 		elif "vote" in data:
 			# Collect vote from groups: whether to archive division or continue
-			print("%s voted" % group.name)
+			print("%s voted %s" % (group.name, data["vote"]))
 			group.vote(data["vote"])
 			if alloc.is_finished_voting():
 				if alloc.can_archive():
 					print("Start archive %s" % case.name)
 					alloc.archive_division()
+					# Notify all users that division has ended
+					channels = get_channels(case.name)
+					channels.send({
+						'text': json.dumps({
+							'success': True,
+							'completed': True,
+						}),
+					})
 				else:
 					# Continue dividing
 					alloc.clear_voting()

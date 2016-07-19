@@ -1,3 +1,4 @@
+window.case_location = new String(window.location);
 window.case_url = new String(window.location).replace("http", "ws");
 window.alloc_url = new String(window.case_url).replace("case", "alloc");
 window.socket;
@@ -77,6 +78,11 @@ function get_price_scheme(message) {
 		err_msg.className = "err-msg";
 		err_msg.appendChild(document.createTextNode("There is an server side error occurred."));
 		return;		
+	}
+
+	if (data.hasOwnProperty("completed")) {
+		$("#waiting_modal").modal("hide");
+		window.location = window.case_location;
 	}
 
 	var is_proposal = data.is_proposal;
